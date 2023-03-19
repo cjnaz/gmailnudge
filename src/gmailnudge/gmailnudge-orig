@@ -1,0 +1,130 @@
+#!/usr/bin/env python3
+"""Gmail Nudge
+Send frequent emails to personal server to be picked up by GMail, thus causing GMail to check more often for new mail.
+Also serves as a general purpose email sender via the command line switches
+"""
+
+__version__ = "V1.1 220411"
+
+
+#==========================================================
+#
+#  Chris Nelson, Copyright 2022
+#
+# V1.1 220411  Incorported use of timevalue
+# V1.0 220204  New for funcs3 V1.0
+#
+# Changes pending
+#   
+#==========================================================
+
+import argparse
+from email.policy import default
+import sys
+import os.path
+import time
+import signal
+
+# sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), './funcs3/'))    # funcs3 in subdir
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../funcs3/'))    # funcs3 in peer dir
+from funcs3 import PROGDIR, loadconfig, getcfg, timevalue, logging, funcs3_min_version_check, funcs3_version, snd_email, ConfigError, SndEmailError
+
+# Configs / Constants
+FUNCS3_MIN_VERSION = 1.1
+CONFIG_FILE = os.path.join(PROGDIR, 'gmailnudge.cfg')
+CONSOLE_LOGGING_FORMAT = '{levelname:>8}:  {message}'
+
+
+def main():
+    body     = ""  if args.message == None  else args.message
+    filename = ""  if args.file    == None  else args.file
+    try:
+        snd_email (subj= args.subject, body=body, filename=filename, htmlfile=args.htmlfile, to=args.to, log=True)
+    except Exception as e:
+        logging.warning(f"snd_email error:  {e}")
+
+
+def service():
+    next_run = time.time()
+    while True:
+        if time.time() > next_run:
+            if loadconfig(cfgfile = args.config_file, flush_on_reload=True):       # Refresh only if file changes
+                logging.warning(f"NOTE - The config file has been reloaded.")
+            try:
+                snd_email (subj=getcfg('NudgeText'), body="Don't care", to='EmailTo')
+                logging.info(f"GMail nudge sent to {getcfg('EmailTo')}")
+            except Exception as e:
+                logging.warning(f"snd_email error:  {e}")
+            next_run += timevalue(getcfg("ServiceLoopTime")).seconds
+        time.sleep(1)
+
+
+def cleanup():
+    logging.warning ("Cleanup")
+    pass
+
+
+def int_handler(signal, frame):
+    logging.warning(f"Signal {signal} received.  Exiting.")
+    cleanup()
+    sys.exit(0)
+signal.signal(signal.SIGINT,  int_handler)      # Ctrl-C
+signal.signal(signal.SIGTERM, int_handler)      # kill
+
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__ + __version__, formatter_class=argparse.RawTextHelpFormatter)
+    parser.add_argument('-t', '--to',
+                        help="A single email address (contains an '@') or a cfg keyword with a whitespace-separated-list of email addresses")
+    parser.add_argument('-s', '--subject', default="dummy subj",
+                        help="Subject text")
+    parser.add_argument('-m', '--message',
+                        help="Body text (--message wins for --file)")
+    parser.add_argument('-f', '--file',
+                        help="Plain-test file to be sent")
+    parser.add_argument('-F', '--htmlfile',
+                        help="HTML formatted file to be sent")
+    parser.add_argument('--service', action='store_true',
+                        help="Send emails in an endless loop for use as a systemd service")
+    parser.add_argument('--config-file', type=str, default=CONFIG_FILE,
+                        help=f"Path to the config file (Default <{CONFIG_FILE})>")
+    parser.add_argument('-V', '--version', action='version', version='%(prog)s ' + __version__,
+                        help="Return version number and exit")
+
+    args = parser.parse_args()
+
+    logfile_override = True  if args.service  else False
+    try:
+        loadconfig(args.config_file, cfglogfile_wins=logfile_override)
+    except Exception as e:
+        raise ConfigError (f"Config file <{args.config_file}> not found.  Aborting.\n{e}") from None
+
+    logging.warning (f"========== {os.path.basename(__file__)} ({__version__}) ==========")
+    logging.info (f"Config file <{os.path.abspath(args.config_file)}>")
+
+
+    # funcs3 min version check
+    if not funcs3_min_version_check(FUNCS3_MIN_VERSION):
+        logging.error(f"funcs3 module must be at least version <V{FUNCS3_MIN_VERSION}>.  Found <{funcs3_version}>.  Aborting.")
+        sys.exit(1)
+    else:
+        logging.debug(f"funcs3 module version <{funcs3_version}> (min required <V{FUNCS3_MIN_VERSION}>)")
+
+
+    if args.service:
+        service()
+
+    # Input file existence check (and any other idiot checks)
+    if args.file:
+        if not os.path.exists(args.file):
+            logging.warning (f"Can't find the input file <{args.file}>")
+            sys.exit(1)
+
+    if args.htmlfile:
+        if not os.path.exists(args.htmlfile):
+            logging.warning (f"Can't find the input file <{args.htmlfile}>")
+            sys.exit(1)
+
+    main()
+    sys.exit()
