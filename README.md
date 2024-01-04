@@ -28,7 +28,8 @@ Supported on Python3.6+ on Linux and Windows.
 ---
 
 ## Notable changes since prior release
-V2.0 - Refreshed and converted to package format
+V2.1 - Adjusted for cjnfuncs V2.1 (module partitioning).
+SMTP params must be in the [SMTP] config file section.
 
 <br/>
 
@@ -37,16 +38,17 @@ V2.0 - Refreshed and converted to package format
 ## Usage
 ```
 $ sndemail -h
-usage: sndemail [-h] [--to TO] [--subject SUBJECT] [--message MESSAGE] [--file FILE] [--htmlfile HTMLFILE] [--service] [--config-file CONFIG_FILE] [--print-log] [--setup-user] [--setup-site] [-V]
+usage: sndemail [-h] [--to TO] [--subject SUBJECT] [--message MESSAGE] [--file FILE] [--htmlfile HTMLFILE] [--service] [--config-file CONFIG_FILE]
+                 [--print-log] [--setup-user] [--setup-site] [-V]
 
 gmailnudge
 Send frequent emails to personal server to be picked up by GMail, thus causing GMail to check more often for new mail.
 Also serves as a general purpose command line email sender.
-2.0
+2.1
 
 options:
   -h, --help            show this help message and exit
-  --to TO, -t TO        A single email address (contains an '@') or a cfg keyword with a whitespace-separated-list of email addresses
+  --to TO, -t TO        A single email address (contains an '@') or a config param ([SMTP] section) with a whitespace-separated-list of email addresses
   --subject SUBJECT, -s SUBJECT
                         Subject text
   --message MESSAGE, -m MESSAGE
@@ -61,6 +63,7 @@ options:
   --setup-user          Install starter files in user space.
   --setup-site          Install starter files in system-wide space. Run with root prev.
   -V, --version         Return version number and exit
+
 ```
 
 <br/>
@@ -70,12 +73,12 @@ options:
 ## Example CLI usage
 ```
 $ sndemail --to family --subject "Here's the support log" --file transcript.txt
-     gmailnudge.cli                  -  WARNING:  ========== gmailnudge (2.0) ==========
+     gmailnudge.cli                  -  WARNING:  ========== gmailnudge (2.1) ==========
      gmailnudge.cli                  -  WARNING:  Config file </path-to/gmailnudge.cfg>
        cjnfuncs.snd_email            -  WARNING:  Email sent <Here's the support log>
 
 $ sndemail --to mygmail --subject "Here's that report" --htmlfile Report_221127.html 
-     gmailnudge.cli                  -  WARNING:  ========== gmailnudge (2.0) ==========
+     gmailnudge.cli                  -  WARNING:  ========== gmailnudge (2.1) ==========
      gmailnudge.cli                  -  WARNING:  Config file </path-to/gmailnudge.cfg>
        cjnfuncs.snd_email            -  WARNING:  Email sent <Here's that report>
 
@@ -90,10 +93,10 @@ $ sndemail --to mygmail --subject "Here's that report" --htmlfile Report_221127.
 Nudge messages sent every 5 minutes. Logging level changed from INFO to WARNING while running:
 ```
 $ sndemail -p
-     gmailnudge.cli                  -  WARNING:  ========== gmailnudge (2.0) ==========
+     gmailnudge.cli                  -  WARNING:  ========== gmailnudge (2.1) ==========
      gmailnudge.cli                  -  WARNING:  Config file </path-to/gmailnudge.cfg>
 Tail of  </path-to/log_gmailnudge.txt>:
-2023-03-19 13:29:00,908      gmailnudge.cli                   WARNING:  ========== gmailnudge (2.0) ==========
+2023-03-19 13:29:00,908      gmailnudge.cli                   WARNING:  ========== gmailnudge (2.1) ==========
 2023-03-19 13:29:00,908      gmailnudge.cli                   WARNING:  Config file </path-to/gmailnudge.cfg>
 2023-03-19 13:29:02,262      gmailnudge.service                  INFO:  Nudge message sent to me@myserver.com
 2023-03-19 13:34:02,605      gmailnudge.service                  INFO:  Nudge message sent to me@myserver.com
@@ -110,7 +113,7 @@ Tail of  </path-to/log_gmailnudge.txt>:
 ## Setup and Usage notes
 - Install gmailnudge from PyPI (pip install gmailnudge).
 - Install the initial configuration files (`sndemail --setup-user` places files at ~/.config/gmailnudge).
-- Edit/configure `gmailnudge.cfg`, `creds_SMTP`, and `creds_gmailnudge` as needed.
+- Edit/configure `gmailnudge.cfg` and `creds_SMTP` as needed.
 - Run manually as `sndemail`, or install the systemd service.
 - When running in service mode (continuously looping) the config file may be edited and is reloaded when changed.  This allows for changing settings without having to restart the service.
 
@@ -129,4 +132,5 @@ Tail of  </path-to/log_gmailnudge.txt>:
 ---
 
 ## Version history
+- 2.1 240104 - Adjusted for cjnfuncs 2.1
 - 2.0 230319 - New

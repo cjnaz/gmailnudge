@@ -5,14 +5,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = 'gmailnudge'
-version = "2.0"
+version = "2.1"
 description = "Nudge GMail so that it will frequently fetch new emails from another service"
 readme = "README.md"
 requires-python = ">=3.6"       # Centos 7 uses 3.6.8
 authors = [ {name = "Chris Nelson", email = "github@cjnaz.com"} ]
 license = {file = "LICENSE.txt"}
 dependencies = [
-    'cjnfuncs >= 2.0.1',
+    'cjnfuncs >= 2.1',
     'importlib-metadata; python_version<"3.8"',
     ]
 classifiers = [                 # https://pypi.org/classifiers/

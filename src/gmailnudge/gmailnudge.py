@@ -8,8 +8,6 @@ Also serves as a general purpose command line email sender.
 #
 #  Chris Nelson, Copyright 2023
 #
-# 2.0 230319 - PyPI package version
-#
 #==========================================================
 
 import argparse
@@ -29,8 +27,13 @@ except:
     except:
         __version__ = "2.0 X"
 
-from cjnfuncs.cjnfuncs import set_toolname, logging, config_item, getcfg, mungePath, deploy_files, timevalue, snd_email
-# set_toolname, setup_logging, logging, config_item, getcfg, mungePath, deploy_files, timevalue, retime, requestlock, releaselock, snd_notif, snd_email
+from cjnfuncs.core import logging, set_toolname
+from cjnfuncs.configman import config_item
+from cjnfuncs.timevalue import timevalue
+from cjnfuncs.mungePath import mungePath
+from cjnfuncs.SMTP import snd_email
+from cjnfuncs.deployfiles import deploy_files
+import cjnfuncs.core as core
 
 
 # Configs / Constants
@@ -42,13 +45,13 @@ PRINTLOGLENGTH  = 40
 def main():
     global filename, htmlfile
     try:
-        snd_email (subj= args.subject, body=args.message, filename=filename, htmlfile=htmlfile, to=args.to, log=True)
+        snd_email (subj= args.subject, body=args.message, filename=filename, htmlfile=htmlfile, to=args.to, log=True, smtp_config=config)
     except Exception as e:
         print(f"snd_email error:  {e}")
 
 
 def service():
-    global tool, config
+    global config
     
     next_run = time.time()
     while True:
@@ -56,11 +59,11 @@ def service():
             if config.loadconfig(flush_on_reload=True):     # Refresh only if file changes
                 logging.warning(f"NOTE - The config file has been reloaded.")
             try:
-                snd_email (subj=getcfg('NudgeText'), body="Don't care", to='EmailTo')
-                logging.info(f"Nudge message sent to {getcfg('EmailTo')}")
+                snd_email (subj=config.getcfg('NudgeText'), body="Don't care", to='EmailTo')
+                logging.info(f"Nudge message sent to {config.getcfg('EmailTo', section='SMTP')}")
             except Exception as e:
                 logging.warning(f"snd_email error:  {e}")
-            next_run += timevalue(getcfg("ServiceLoopTime")).seconds
+            next_run += timevalue(config.getcfg("ServiceLoopTime")).seconds
         time.sleep(0.5)
 
 
@@ -77,14 +80,14 @@ signal.signal(signal.SIGTERM, int_handler)      # kill
 
 
 def cli():
-    global tool, config, args, logfile_override
+    global config, args, logfile_override
     global filename, htmlfile
 
-    tool = set_toolname (TOOLNAME)
+    set_toolname (TOOLNAME)
 
     parser = argparse.ArgumentParser(description=__doc__ + __version__, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('--to', '-t',
-                        help="A single email address (contains an '@') or a cfg keyword with a whitespace-separated-list of email addresses")
+                        help="A single email address (contains an '@') or a config param ([SMTP] section) with a whitespace-separated-list of email addresses")
     parser.add_argument('--subject', '-s', default="--subject--",
                         help="Subject text")
     parser.add_argument('--message', '-m', 
@@ -138,16 +141,16 @@ def cli():
         sys.exit(1)
 
 
-    logging.warning (f"========== {tool.toolname} ({__version__}) ==========")
+    logging.warning (f"========== {core.tool.toolname} ({__version__}) ==========")
     logging.warning (f"Config file <{config.config_full_path}>")
 
 
     # Print log
     if args.print_log:
         try:
-            _lf = mungePath(getcfg("LogFile"), tool.log_dir_base).full_path
+            _lf = mungePath(config.getcfg("LogFile"), core.tool.log_dir_base).full_path
             print (f"Tail of  <{_lf}>:")
-            _xx = collections.deque(_lf.open(), getcfg("PrintLogLength", PRINTLOGLENGTH))
+            _xx = collections.deque(_lf.open(), config.getcfg("PrintLogLength", PRINTLOGLENGTH))
             for line in _xx:
                 print (line, end="")
         except Exception as e:
