@@ -59,7 +59,7 @@ def service():
             if config.loadconfig(flush_on_reload=True):     # Refresh only if file changes
                 logging.warning(f"NOTE - The config file has been reloaded.")
             try:
-                snd_email (subj=config.getcfg('NudgeText'), body="Don't care", to='EmailTo')
+                snd_email (subj=config.getcfg('NudgeText'), body="Don't care", to='EmailTo', smtp_config=config)
                 logging.info(f"Nudge message sent to {config.getcfg('EmailTo', section='SMTP')}")
             except Exception as e:
                 logging.warning(f"snd_email error:  {e}")

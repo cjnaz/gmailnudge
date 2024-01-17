@@ -132,5 +132,6 @@ Tail of  </path-to/log_gmailnudge.txt>:
 ---
 
 ## Version history
+- 2.1.1 240117 - service mode bug
 - 2.1 240104 - Adjusted for cjnfuncs 2.1
 - 2.0 230319 - New

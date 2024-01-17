@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = 'gmailnudge'
-version = "2.1"
+version = "2.1.1"
 description = "Nudge GMail so that it will frequently fetch new emails from another service"
 readme = "README.md"
 requires-python = ">=3.6"       # Centos 7 uses 3.6.8
